@@ -126,9 +126,11 @@ class Ground
 {
 public:
     Ground(int);
-    Texture texture;
+    Texture grass;
+    Texture ramp;
     Sprite sprite1;
     Sprite sprite2;
+    Sprite sprite3;
     int fC = 0, mAt, mFor = 20, distance = 0;
     void update(bool);
 };
@@ -136,12 +138,16 @@ public:
 Ground::Ground(int m)
 {
     mAt = m;
-    if(!texture.loadFromFile("Ground.png"))
+    if(!grass.loadFromFile("Ground Pixelated.png"))
         cout << "yikers" << endl;
-    sprite1.setTexture(texture);
+    if(!ramp.loadFromFile("Ramp Pixelated.png"))
+        cout << "yikers" << endl;
+    sprite1.setTexture(grass);
     sprite1.setPosition(0,700);
-    sprite2.setTexture(texture);
+    sprite2.setTexture(ramp);
     sprite2.setPosition(1920,700);
+    sprite3.setTexture(ramp);
+    sprite3.setPosition(1920*2,700);
 }
 
 void Ground::update(bool moving)
@@ -152,24 +158,27 @@ void Ground::update(bool moving)
     int y1 = sprite1.getPosition().y;
     int x2 = sprite2.getPosition().x;
     int y2 = sprite2.getPosition().y;
+    int x3 = sprite3.getPosition().x;
+    int y3 = sprite3.getPosition().y;
     if(moving and fC % mAt == 0)
     {
-        if(x1 <= -1920)
+        /*if(x1 <= -1920)
         {
             sprite1.setPosition(1920-mFor,y1);
         }
         else
-        {
+        {*/
             sprite1.setPosition(x1-mFor,y1);
-        }
+        /*}
         if(x2 <= -1920)
         {
             sprite2.setPosition(1920-mFor,y2);
         }
         else
-        {
+        {*/
             sprite2.setPosition(x2-mFor,y2);
-        }
+        //}
+        sprite3.setPosition(x3-mFor,y3);
         distance += mFor;
         cout << distance << endl;
     }
@@ -206,13 +215,14 @@ int main()
     bg.update(terry.moving);
     ground.update(terry.moving);
 
-    window.clear(Color::White);
+    window.clear(Color(27,81,99));
 
     window.draw(bg.sprite1);
     window.draw(bg.sprite2);
 
     window.draw(ground.sprite1);
     window.draw(ground.sprite2);
+    //window.draw(ground.sprite3);
 
     window.draw(terry.sprite);
 
