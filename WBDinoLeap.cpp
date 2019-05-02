@@ -10,11 +10,12 @@ public:
     Player(int);
     Texture texture;
     Sprite sprite;
-    int frame = 0, row = 0, fC = 0, mAt;
+    int frame = 0, row = 0, fC = 0, mAt, upDown = 0;
     bool moving = false, flying = false, boots = false, boosting = false;
     bool fToggle;
     void update();
     void setFrame();
+    void rampey(int);
 };
 
 Player::Player(int m)
@@ -24,7 +25,7 @@ Player::Player(int m)
         cout << "yikers" << endl;
     sprite.setTexture(texture);
     sprite.scale(.25f,.25f);
-    sprite.setPosition(200,1000);
+    sprite.setPosition(300,550);
 }
 
 void Player::update()
@@ -32,6 +33,7 @@ void Player::update()
     sprite.setTextureRect(IntRect(1024*frame,1024*row,1024,1024));
     int x = sprite.getPosition().x;
     int y = sprite.getPosition().y;
+    upDown = 0;
     if(Keyboard::isKeyPressed(Keyboard::Left) and fC % mAt == 0)
         {
             moving = true;
@@ -41,9 +43,9 @@ void Player::update()
             moving = true;
         }
     if(Keyboard::isKeyPressed(Keyboard::Up))
-        sprite.setPosition(x,y-5);
+        upDown = 5;
     if(Keyboard::isKeyPressed(Keyboard::Down))
-        sprite.setPosition(x,y+5);
+        upDown = -5;
     fC++;
 }
 
@@ -66,6 +68,11 @@ void Player::setFrame()
     }
 }
 
+void Player::rampey(int distance)
+{
+    if(distance )
+}
+
 class Background
 {
 public:
@@ -74,7 +81,7 @@ public:
     Sprite sprite1;
     Sprite sprite2;
     int fC = 0, mAt, mFor = 10, distance = 0;
-    void update(bool);
+    void update(bool, int);
 };
 
 Background::Background(int m)
@@ -88,7 +95,7 @@ Background::Background(int m)
     sprite2.setPosition(1920,-200);
 }
 
-void Background::update(bool moving)
+void Background::update(bool moving, int uD)
 {
     sprite1.setTextureRect(IntRect(0,1080*2,1920,1080));
     sprite2.setTextureRect(IntRect(0,1080*2,1920,1080));
@@ -96,6 +103,10 @@ void Background::update(bool moving)
     int y1 = sprite1.getPosition().y;
     int x2 = sprite2.getPosition().x;
     int y2 = sprite2.getPosition().y;
+    sprite1.setPosition(x1,y1-uD);
+    sprite2.setPosition(x2,y2-uD);
+    y1 = sprite1.getPosition().y;
+    y2 = sprite2.getPosition().y;
     if(moving and fC % mAt == 0)
     {
         if(x1 <= -1920)
@@ -131,8 +142,8 @@ public:
     Sprite sprite1;
     Sprite sprite2;
     Sprite sprite3;
-    int fC = 0, mAt, mFor = 20, distance = 0;
-    void update(bool);
+    int fC = 0, mAt, mFor = 30, distance = 0;
+    void update(bool, int);
 };
 
 Ground::Ground(int m)
@@ -150,7 +161,7 @@ Ground::Ground(int m)
     sprite3.setPosition(1920*2,700);
 }
 
-void Ground::update(bool moving)
+void Ground::update(bool moving, int uD)
 {
     sprite1.setTextureRect(IntRect(0,0,1920,1080));
     sprite2.setTextureRect(IntRect(0,0,1920,1080));
@@ -160,6 +171,12 @@ void Ground::update(bool moving)
     int y2 = sprite2.getPosition().y;
     int x3 = sprite3.getPosition().x;
     int y3 = sprite3.getPosition().y;
+    sprite1.setPosition(x1,y1-uD);
+    sprite2.setPosition(x2,y2-uD);
+    sprite3.setPosition(x3,y3-uD);
+    y1 = sprite1.getPosition().y;
+    y2 = sprite2.getPosition().y;
+    y3 = sprite3.getPosition().y;
     if(moving and fC % mAt == 0)
     {
         /*if(x1 <= -1920)
@@ -212,8 +229,8 @@ int main()
 
     terry.setFrame();
     terry.update();
-    bg.update(terry.moving);
-    ground.update(terry.moving);
+    bg.update(terry.moving, terry.upDown);
+    ground.update(terry.moving, terry.upDown);
 
     window.clear(Color(27,81,99));
 
@@ -229,3 +246,4 @@ int main()
     window.display();
     }
 }
+
