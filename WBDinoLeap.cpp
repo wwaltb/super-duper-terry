@@ -11,6 +11,7 @@ public:
     Texture texture;
     Sprite sprite;
     int frame = 0, row = 0, fC = 0, mAt, upDown = 0;
+    int uDCount = 0, rotCount = 0;
     bool moving = false, flying = false, boots = false, boosting = false;
     bool fToggle;
     void update();
@@ -25,7 +26,8 @@ Player::Player(int m)
         cout << "yikers" << endl;
     sprite.setTexture(texture);
     sprite.scale(.25f,.25f);
-    sprite.setPosition(300,550);
+    sprite.setOrigin(592,592);
+    sprite.setPosition(300+592/5,550+592/4);
 }
 
 void Player::update()
@@ -37,15 +39,27 @@ void Player::update()
     if(Keyboard::isKeyPressed(Keyboard::Left) and fC % mAt == 0)
         {
             moving = true;
+            cout << "uD: " << uDCount << endl;
+            uDCount = 0;
+            cout << "rot: " << rotCount << endl;
+            rotCount = 0;
         }
     if(Keyboard::isKeyPressed(Keyboard::Right) and fC % mAt == 0)
         {
             moving = true;
+            cout << "uD: " << uDCount << endl;
+            uDCount = 0;
+            cout << "rot: " << rotCount << endl;
+            rotCount = 0;
         }
     if(Keyboard::isKeyPressed(Keyboard::Up))
-        upDown = 15;
+        {upDown = 1; uDCount += upDown;}
     if(Keyboard::isKeyPressed(Keyboard::Down))
-        upDown = -15;
+        {upDown = -1; uDCount += upDown;}
+    if(Keyboard::isKeyPressed(Keyboard::A))
+        {sprite.rotate(-1); rotCount += -1;}
+    if(Keyboard::isKeyPressed(Keyboard::D))
+        {sprite.rotate(1); rotCount += 1;}
     fC++;
 }
 
@@ -256,5 +270,3 @@ int main()
     window.display();
     }
 }
-
-
