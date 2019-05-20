@@ -14,7 +14,7 @@ public:
     int frame = 0, row = 0, fC = 0, mAt, rotation = 0;
     int uDCount = 0, rotCount = 0;
     double upDown = 0;
-    bool moving = false, flying = false, boots = false, boosting = false, ramp = false;
+    bool moving = false, flying = false, boots = false, boosting = false, ramp = false, flew = false;
     ifstream hFile;
     ifstream rFile;
     bool fToggle;
@@ -44,7 +44,7 @@ void Player::update()
     int y = sprite.getPosition().y;
     //upDown = 0;
 
-    if(!flying)
+    if(!flew)
     {
         upDown = 0;
         if(Keyboard::isKeyPressed(Keyboard::Right) and fC % mAt == 0)
@@ -58,7 +58,7 @@ void Player::update()
     }
     if(flying)
     {
-        upDown -= 0.5;
+        upDown -= 0.3;
         //cout << upDown << endl;
         if(Keyboard::isKeyPressed(Keyboard::Right))
         {
@@ -121,9 +121,11 @@ void Player::rampey(int distance)
 
 void Player::startFlying()
 {
+    flew = true;
     flying = true;
     moving = false;
-    upDown = 30;
+    upDown = 20+(8-mAt);
+    sprite.setRotation(-45);
 }
 
 class Background
@@ -246,6 +248,7 @@ void Water::update(bool moving, int uD, Player &terry)
     fC++;
 }
 
+void changeFat
 
 class Ground
 {
@@ -287,7 +290,7 @@ void Ground::update(bool moving, int uD, Player &terry)
     {
         terry.startFlying();
     }
-    cout << sprite4.getPosition().y << endl;
+    //cout << sprite4.getPosition().y << endl;
     if(sprite4.getPosition().y < 400)
         terry.flying = false;
     sprite1.setTextureRect(IntRect(0,0,1920,1080));
@@ -326,6 +329,8 @@ void Ground::update(bool moving, int uD, Player &terry)
 int main()
 {
     int initialSpeed = 3;
+
+    cin >> initialSpeed;
 
     Player terry(initialSpeed);
 
@@ -384,4 +389,3 @@ int main()
     window.display();
     }
 }
-
