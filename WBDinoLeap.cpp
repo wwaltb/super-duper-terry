@@ -11,10 +11,10 @@ public:
     Player(int);
     Texture texture;
     Sprite sprite;
-    int frame = 0, row = 0, fC = 0, mAt, rotation = 0;
-    int uDCount = 0, rotCount = 0;
-    double upDown = 0;
-    bool moving = false, flying = false, boots = false, boosting = false, ramp = false, flew = false;
+    int frame, row, fC, mAt, rotation, changeTo;
+    int uDCount, rotCount;
+    double upDown;
+    bool moving, flying, boots, boosting, ramp, flew;
     ifstream hFile;
     ifstream rFile;
     bool fToggle;
@@ -27,6 +27,9 @@ public:
 Player::Player(int m)
 {
     mAt = m;
+    frame = 0; row = 0; fC = 0; rotation = 0; uDCount = 0; rotCount = 0, changeTo = 0;
+    upDown = 0;
+    moving = false; flying = false; boots = false; boosting = false; ramp = false; flew = false;
     if(!texture.loadFromFile("Terry.png"))
         cout << "yikers" << endl;
     sprite.setTexture(texture);
@@ -69,6 +72,7 @@ void Player::update()
             sprite.rotate(-1);
         }
     }
+    //Testing terry positions:
     /*if(Keyboard::isKeyPressed(Keyboard::Up) and fC % mAt == 0)
         {upDown = 5; uDCount += upDown;}
     if(Keyboard::isKeyPressed(Keyboard::Down) and fC % mAt == 0)
@@ -124,7 +128,7 @@ void Player::startFlying()
     flew = true;
     flying = true;
     moving = false;
-    upDown = 20+(8-mAt);
+    upDown = 20+(6-mAt);
     sprite.setRotation(-45);
 }
 
@@ -248,8 +252,6 @@ void Water::update(bool moving, int uD, Player &terry)
     fC++;
 }
 
-void changeFat
-
 class Ground
 {
 public:
@@ -304,6 +306,13 @@ void Ground::update(bool moving, int uD, Player &terry)
     int y3 = sprite3.getPosition().y;
     int x4 = sprite4.getPosition().x;
     int y4 = sprite4.getPosition().y;
+
+    if(distance == 2010 and fC % mAt == 0)
+        terry.changeTo = mAt - 1;
+
+    if(distance == 2940 and fC % mAt == 0)
+        terry.changeTo = mAt - 1;
+
     if(moving)
         {
             if(distance >= 1530 and distance <= 3330)
@@ -325,6 +334,8 @@ void Ground::update(bool moving, int uD, Player &terry)
     }
     fC++;
 }
+
+void changeFrame(int, Player &terry, Background &bg, Ground &ground, Water &water);
 
 int main()
 {
@@ -354,6 +365,13 @@ int main()
                 if(event.key.code == Keyboard::Right)
                 terry.moving = false;
         }
+
+    if(terry.changeTo > 0)
+    {
+        changeFrame(terry.changeTo, terry, bg, ground, water);
+        cout << "yes" << endl;
+        terry.changeTo = 0;
+    }
 
     terry.setFrame();
     terry.update();
@@ -388,4 +406,12 @@ int main()
 
     window.display();
     }
+}
+
+void changeFrame(int f, Player &terry, Background &bg, Ground &ground, Water &water)
+{
+    terry.mAt = f;
+    bg.mAt = f;
+    ground.mAt = f;
+    water.mAt = f;
 }
