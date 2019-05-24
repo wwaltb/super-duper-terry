@@ -342,8 +342,11 @@ public:
     int whichButton;
     int xPos, yPos;
     int speed, boots, fuel, wings;
+    int frame;
     Sprite button;
+    Sprite progression;
     Texture texture;
+    Texture texture2;
     void update(Player &terry);
     void speedButton(Player &terry);
     void bootsButton(Player &terry);
@@ -356,11 +359,17 @@ shopButton::shopButton(int i, string n, int x, int y)
     whichButton = i;
     xPos = x; yPos = y;
     speed = 0; boots = 0; fuel = 0; wings = 0;
+    frame = 0;
     if(!texture.loadFromFile(n))
+        cout << "yikes" << endl;
+    if(!texture.loadFromFile("Shop Bar.png"))
         cout << "yikes" << endl;
     button.setTexture(texture);
     button.setPosition(xPos,yPos);
     button.setColor(Color(255,255,255,200));
+    progression.setTexture(texture2);
+    progression.setTextureRect(IntRect(0,70*frame,420,70));
+    progression.setPosition(xPos,yPos + 60);
 }
 
 void shopButton::update(Player &terry)
@@ -369,6 +378,7 @@ void shopButton::update(Player &terry)
     int mX, mY;
     mX = mouse.getPosition().x;
     mY = mouse.getPosition().y;
+    progression.setTextureRect(IntRect(0,70*frame,420,70));
     if(button.getGlobalBounds().contains(mX,mY))
     {
         //Hover state:
@@ -413,6 +423,7 @@ void shopButton::speedButton(Player &terry)
             if(terry.money > speed0)
             {
                 speed++;
+                frame++;
                 terry.money -= speed0;
             }
             break;
@@ -420,6 +431,7 @@ void shopButton::speedButton(Player &terry)
             if(terry.money > speed1)
             {
                 speed++;
+                frame++;
                 terry.money -= speed1;
             }
             break;
@@ -427,6 +439,7 @@ void shopButton::speedButton(Player &terry)
             if(terry.money > speed2)
             {
                 speed++;
+                frame++;
                 terry.money -= speed2;
             }
             break;
@@ -434,6 +447,7 @@ void shopButton::speedButton(Player &terry)
             if(terry.money > speed3)
             {
                 speed++;
+                frame++;
                 terry.money -= speed3;
             }
             break;
@@ -452,6 +466,7 @@ void shopButton::bootsButton(Player &terry)
             if(terry.money > boots0)
             {
                 boots++;
+                frame++;
                 terry.money -= boots0;
             }
             break;
@@ -459,6 +474,7 @@ void shopButton::bootsButton(Player &terry)
             if(terry.money > boots1)
             {
                 boots++;
+                frame++;
                 terry.money -= boots1;
             }
             break;
@@ -466,6 +482,7 @@ void shopButton::bootsButton(Player &terry)
             if(terry.money > boots2)
             {
                 boots++;
+                frame++;
                 terry.money -= boots2;
             }
             break;
@@ -473,6 +490,7 @@ void shopButton::bootsButton(Player &terry)
             if(terry.money > boots3)
             {
                 boots++;
+                frame++;
                 terry.money -= boots3;
             }
             break;
@@ -490,6 +508,7 @@ void shopButton::fuelButton(Player &terry)
             if(terry.money > fuel0)
             {
                 fuel++;
+                frame++;
                 terry.money -= fuel0;
             }
             break;
@@ -497,6 +516,7 @@ void shopButton::fuelButton(Player &terry)
             if(terry.money > fuel1)
             {
                 fuel++;
+                frame++;
                 terry.money -= fuel1;
             }
             break;
@@ -504,6 +524,7 @@ void shopButton::fuelButton(Player &terry)
             if(terry.money > fuel2)
             {
                 fuel++;
+                frame++;
                 terry.money -= fuel2;
             }
             break;
@@ -511,6 +532,7 @@ void shopButton::fuelButton(Player &terry)
             if(terry.money > fuel3)
             {
                 fuel++;
+                frame++;
                 terry.money -= fuel3;
             }
             break;
@@ -528,6 +550,7 @@ void shopButton::wingsButton(Player &terry)
             if(terry.money > wings0)
             {
                 wings++;
+                frame++;
                 terry.money -= wings0;
             }
             break;
@@ -535,6 +558,7 @@ void shopButton::wingsButton(Player &terry)
             if(terry.money > wings1)
             {
                 wings++;
+                frame++;
                 terry.money -= wings1;
             }
             break;
@@ -542,13 +566,15 @@ void shopButton::wingsButton(Player &terry)
             if(terry.money > wings2)
             {
                 wings++;
+                frame++;
                 terry.money -= wings2;
             }
             break;
         case 3 :
             if(terry.money > wings3)
             {
-                wings3++;
+                wings++;
+                frame++;
                 terry.money -= wings3;
             }
             break;
