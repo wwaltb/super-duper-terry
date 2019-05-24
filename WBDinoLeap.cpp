@@ -11,7 +11,7 @@ public:
     Player(int);
     Texture texture;
     Sprite sprite;
-    int frame, row, fC, mAt, rotation, changeTo;
+    int frame, row, fC, mAt, rotation, changeTo, money;
     int uDCount, rotCount;
     double upDown;
     bool moving, flying, boots, boosting, ramp, flew;
@@ -28,7 +28,7 @@ Player::Player(int m)
 {
     mAt = m;
     frame = 0; row = 0; fC = 0; rotation = 0; uDCount = 0; rotCount = 0, changeTo = 0;
-    upDown = 0;
+    upDown = 0; money = 0;
     moving = false; flying = false; boots = false; boosting = false; ramp = false; flew = false;
     if(!texture.loadFromFile("Terry.png"))
         cout << "yikers" << endl;
@@ -333,6 +333,228 @@ void Ground::update(bool moving, int uD, Player &terry)
                 cout << distance << endl;
     }
     fC++;
+}
+
+class shopButton
+{
+public:
+    shopButton(int, string, int, int);
+    int whichButton;
+    int xPos, yPos;
+    int speed, boots, fuel, wings;
+    Sprite button;
+    Texture texture;
+    void update(Player &terry);
+    void speedButton(Player &terry);
+    void bootsButton(Player &terry);
+    void fuelButton(Player &terry);
+    void wingsButton(Player &terry);
+};
+
+shopButton::shopButton(int i, string n, int x, int y)
+{
+    whichButton = i;
+    xPos = x; yPos = y;
+    speed = 0; boots = 0; fuel = 0; wings = 0;
+    if(!texture.loadFromFile(n))
+        cout << "yikes" << endl;
+    button.setTexture(texture);
+    button.setPosition(xPos,yPos);
+    button.setColor(Color(255,255,255,200));
+}
+
+void shopButton::update(Player &terry)
+{
+    Mouse mouse;
+    int mX, mY;
+    mX = mouse.getPosition().x;
+    mY = mouse.getPosition().y;
+    if(button.getGlobalBounds().contains(mX,mY))
+    {
+        //Hover state:
+        button.setColor(Color(255,255,255,255));
+
+        //If button pressed:
+        if(mouse.isButtonPressed(Mouse::Left))
+        {
+            switch(whichButton)
+            {
+                case 1 :
+                    speedButton(terry);
+                    break;
+                case 2 :
+                    bootsButton(terry);
+                    break;
+                case 3 :
+                    fuelButton(terry);
+                    break;
+                case 4 :
+                    wingsButton(terry);
+                    break;
+                default :
+                    break;
+            }
+        }
+    }
+    else
+    {
+        //Non-hover state:
+        button.setColor(Color(255,255,255,200));
+    }
+}
+
+void shopButton::speedButton(Player &terry)
+{
+    int speed0 = 1000, speed1 = 2000, speed2 = 5000, speed3 = 10000;
+
+    switch(speed)
+    {
+        case 0 :
+            if(terry.money > speed0)
+            {
+                speed++;
+                terry.money -= speed0;
+            }
+            break;
+        case 1 :
+            if(terry.money > speed1)
+            {
+                speed++;
+                terry.money -= speed1;
+            }
+            break;
+        case 2 :
+            if(terry.money > speed2)
+            {
+                speed++;
+                terry.money -= speed2;
+            }
+            break;
+        case 3 :
+            if(terry.money > speed3)
+            {
+                speed++;
+                terry.money -= speed3;
+            }
+            break;
+        default :
+            break;
+    }
+
+}
+void shopButton::bootsButton(Player &terry)
+{
+    int boots0 = 5000, boots1 = 7500, boots2 = 12500, boots3 = 20000;
+
+    switch(boots)
+    {
+        case 0 :
+            if(terry.money > boots0)
+            {
+                boots++;
+                terry.money -= boots0;
+            }
+            break;
+        case 1 :
+            if(terry.money > boots1)
+            {
+                boots++;
+                terry.money -= boots1;
+            }
+            break;
+        case 2 :
+            if(terry.money > boots2)
+            {
+                boots++;
+                terry.money -= boots2;
+            }
+            break;
+        case 3 :
+            if(terry.money > boots3)
+            {
+                boots++;
+                terry.money -= boots3;
+            }
+            break;
+        default :
+            break;
+    }
+}
+void shopButton::fuelButton(Player &terry)
+{
+    int fuel0 = 500, fuel1 = 1000, fuel2 = 1500, fuel3 = 2500;
+
+    switch(fuel)
+    {
+        case 0 :
+            if(terry.money > fuel0)
+            {
+                fuel++;
+                terry.money -= fuel0;
+            }
+            break;
+        case 1 :
+            if(terry.money > fuel1)
+            {
+                fuel++;
+                terry.money -= fuel1;
+            }
+            break;
+        case 2 :
+            if(terry.money > fuel2)
+            {
+                fuel++;
+                terry.money -= fuel2;
+            }
+            break;
+        case 3 :
+            if(terry.money > fuel3)
+            {
+                fuel++;
+                terry.money -= fuel3;
+            }
+            break;
+        default :
+            break;
+    }
+}
+void shopButton::wingsButton(Player &terry)
+{
+    int wings0 = 10000, wings1 = 15000, wings2 = 20000, wings3 = 25000;
+
+    switch(wings)
+    {
+        case 0 :
+            if(terry.money > wings0)
+            {
+                wings++;
+                terry.money -= wings0;
+            }
+            break;
+        case 1 :
+            if(terry.money > wings1)
+            {
+                wings++;
+                terry.money -= wings1;
+            }
+            break;
+        case 2 :
+            if(terry.money > wings2)
+            {
+                wings++;
+                terry.money -= wings2;
+            }
+            break;
+        case 3 :
+            if(terry.money > wings3)
+            {
+                wings3++;
+                terry.money -= wings3;
+            }
+            break;
+        default :
+            break;
+    }
 }
 
 void changeFrame(int, Player &terry, Background &bg, Ground &ground, Water &water);
