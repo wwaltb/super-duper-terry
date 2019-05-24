@@ -563,17 +563,21 @@ int main()
 {
     int initialSpeed = 3;
 
-    cin >> initialSpeed;
+    //cin >> initialSpeed;
 
     Player terry(initialSpeed);
-
     Background bg(initialSpeed);
-
     Ground ground(initialSpeed);
-
     Water water(initialSpeed);
 
-    RenderWindow window(VideoMode(1920,1080),"Terry");
+    shopButton shopB1(1, "Speed.png", 400, 300-20);
+    shopButton shopB2(2, "Boots.png", 400, 440-20);
+    shopButton shopB3(3, "Fuel.png",  400, 580-20);
+    shopButton shopB4(4, "Wings.png", 400, 720-20);
+
+    bool titleScreen = false, shopMenu = true, gameState = false, deathScreen = false;
+
+    RenderWindow window(VideoMode(1920,1080),"Terry", Style::Fullscreen);
     window.setFramerateLimit(60);
 
     while(window.isOpen())
@@ -588,45 +592,73 @@ int main()
                 terry.moving = false;
         }
 
-    if(terry.changeTo > 0)
+    if(shopMenu)
     {
-        changeFrame(terry.changeTo, terry, bg, ground, water);
-        cout << "yes" << endl;
-        terry.changeTo = 0;
+        Texture bgTxtr;
+        if(!bgTxtr.loadFromFile("Dino Store.png"))
+            cout << "yikes" << endl;
+        Sprite shopBG;
+        shopBG.setTexture(bgTxtr);
+
+        shopB1.update(terry);
+        shopB2.update(terry);
+        shopB3.update(terry);
+        shopB4.update(terry);
+
+        window.clear();
+
+        window.draw(shopBG);
+        window.draw(shopB1.button);
+        window.draw(shopB2.button);
+        window.draw(shopB3.button);
+        window.draw(shopB4.button);
+
+        window.display();
     }
 
-    terry.setFrame();
-    terry.update();
-    ground.update(terry.moving, terry.upDown, terry);
-    bg.update(terry.moving, terry.upDown, terry);
-    water.update(terry.moving, terry.upDown, terry);
-
-    window.clear(Color(27,81,99));
-
-    window.draw(bg.sprite1);
-    window.draw(bg.sprite2);
-
-    if(ground.distance <= 4000)
+    if(gameState)
     {
-        window.draw(water.sprite1);
-        window.draw(water.sprite2);
+       if(terry.changeTo > 0)
+        {
+            changeFrame(terry.changeTo, terry, bg, ground, water);
+            cout << "yes" << endl;
+            terry.changeTo = 0;
+        }
+
+        terry.setFrame();
+        terry.update();
+        ground.update(terry.moving, terry.upDown, terry);
+        bg.update(terry.moving, terry.upDown, terry);
+        water.update(terry.moving, terry.upDown, terry);
+
+        window.clear(Color(27,81,99));
+
+        window.draw(bg.sprite1);
+        window.draw(bg.sprite2);
+
+        if(ground.distance <= 4000)
+        {
+            window.draw(water.sprite1);
+            window.draw(water.sprite2);
+        }
+
+
+        window.draw(ground.sprite1);
+        window.draw(ground.sprite2);
+        window.draw(ground.sprite4);
+        //window.draw(ground.sprite3);
+
+        window.draw(terry.sprite);
+
+        if(ground.distance > 4000)
+        {
+            window.draw(water.sprite1);
+            window.draw(water.sprite2);
+        }
+
+        window.display();
     }
 
-
-    window.draw(ground.sprite1);
-    window.draw(ground.sprite2);
-    window.draw(ground.sprite4);
-    //window.draw(ground.sprite3);
-
-    window.draw(terry.sprite);
-
-    if(ground.distance > 4000)
-    {
-        window.draw(water.sprite1);
-        window.draw(water.sprite2);
-    }
-
-    window.display();
     }
 }
 
