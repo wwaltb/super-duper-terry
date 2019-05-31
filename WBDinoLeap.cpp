@@ -1,6 +1,7 @@
 #include <SFML/Graphics.hpp>
 #include <iostream>
 #include <fstream>
+#include <sstream>
 
 using namespace std;
 using namespace sf;
@@ -11,7 +12,7 @@ public:
     Player(int);
     Texture texture;
     Sprite sprite;
-    int frame, row, fC, mAt, rotation, changeTo, money;
+    int frame, row, fC, mAt, rotation, changeAt, changeF, money;
     int uDCount, rotCount;
     double upDown;
     bool moving, flying, boots, boosting, ramp, flew;
@@ -27,8 +28,8 @@ public:
 Player::Player(int m)
 {
     mAt = m;
-    frame = 0; row = 0; fC = 0; rotation = 0; uDCount = 0; rotCount = 0, changeTo = 0;
-    upDown = 0; money = 0;
+    frame = 0; row = 0; fC = 0; rotation = 0; uDCount = 0; rotCount = 0;
+    upDown = 0; money = 100000, changeAt = 0, changeF = 0;
     moving = false; flying = false; boots = false; boosting = false; ramp = false; flew = false;
     if(!texture.loadFromFile("Terry.png"))
         cout << "yikers" << endl;
@@ -61,7 +62,7 @@ void Player::update()
     }
     if(flying)
     {
-        upDown -= 0.3;
+        upDown -= .3;
         //cout << upDown << endl;
         if(Keyboard::isKeyPressed(Keyboard::Right))
         {
@@ -93,7 +94,7 @@ void Player::setFrame()
             row = 0;
             if(fC % mAt == 0)
             {
-                    if(frame == 0) frame = 1;
+                     if(frame == 0) frame = 1;
                 else if(frame == 1) frame = 2;
                 else frame = 0;
             }
@@ -109,6 +110,28 @@ void Player::setFrame()
             frame = 0;
         }
     }
+    if(boots)
+    {
+        if(moving)
+        {
+            if(fC % mAt == 0)
+            {
+                     if(frame == 1) {frame = 2; row = 1;}
+                else if(frame == 2) {frame = 0; row = 2;}
+                else {frame = 1; row = 1;}
+            }
+        }
+        if(flying)
+        {
+            row = 2;
+            frame = 1;
+        }
+        if(!flying and !moving)
+        {
+            row = 1;
+            frame = 1;
+        }
+    }
 }
 
 void Player::rampey(int distance)
@@ -116,10 +139,19 @@ void Player::rampey(int distance)
     hFile >> upDown;
     cout << upDown << endl;
     rFile >> rotation;
-    cout << rotation << endl;
+    const float aX = 2.82e-14;
+    const float bX = -2.8219e-10;
+    const float cX = 9.9868e-7;
+    const float dX = -0.00134363;
+    const float eX = 0.179261;
+    const float fX = 603.695;
+    upDown = aX*pow(distance, 5) + bX*pow(distance, 4) + cX*pow(distance, 3) + dX*pow(distance, 2) + eX*distance + fX;
+    cout << upDown << endl << endl;
     sprite.rotate(rotation);
     if (distance < 2200)
         upDown -= 1;
+    if (distance > 1850 and distance < 2146)
+        upDown += 1.5;
     else upDown += 1;
 }
 
@@ -128,7 +160,8 @@ void Player::startFlying()
     flew = true;
     flying = true;
     moving = false;
-    upDown = 20+(6-mAt);
+    upDown = 20+(24-(mAt*3));
+    changeF = 24-mAt*3;
     sprite.setRotation(-45);
 }
 
@@ -177,6 +210,7 @@ void Background::update(bool moving, int uD, Player &terry)
 
     if(moving and fC % mAt == 0 or terry.flying)
     {
+        //cout << "bg " << x1 + 1920 - x2 << endl;
         if(x1 <= -1920)
         {
             sprite1.setPosition(1920-mFor,y1);
@@ -231,6 +265,7 @@ void Water::update(bool moving, int uD, Player &terry)
 
     if(moving and fC % mAt == 0 or terry.flying)
     {
+        //cout << "w " << x1 + 1920 - x2 << endl;
         if(x1 <= -1920)
         {
             sprite1.setPosition(1920-mFor,y1+uD);
@@ -308,10 +343,10 @@ void Ground::update(bool moving, int uD, Player &terry)
     int y4 = sprite4.getPosition().y;
 
     if(distance == 2010 and fC % mAt == 0)
-        terry.changeTo = mAt - 1;
+        terry.changeAt = mAt - 1;
 
     if(distance == 2940 and fC % mAt == 0)
-        terry.changeTo = mAt - 1;
+        terry.changeAt = mAt - 1;
 
     if(moving)
         {
@@ -330,7 +365,7 @@ void Ground::update(bool moving, int uD, Player &terry)
             sprite3.setPosition(x3-mFor,y3+terry.upDown);
             sprite4.setPosition(x4-mFor,y4+terry.upDown);
             distance += mFor;
-                cout << distance << endl;
+            //cout << distance << endl;
     }
     fC++;
 }
@@ -362,14 +397,14 @@ shopButton::shopButton(int i, string n, int x, int y)
     frame = 0;
     if(!texture.loadFromFile(n))
         cout << "yikes" << endl;
-    if(!texture.loadFromFile("Shop Bar.png"))
+    if(!texture2.loadFromFile("Shop Bar.png"))
         cout << "yikes" << endl;
     button.setTexture(texture);
-    button.setPosition(xPos,yPos);
-    button.setColor(Color(255,255,255,200));
+    button.setOrigin(210,46.5);
+    button.setPosition(xPos + 210,yPos + 46.5);
     progression.setTexture(texture2);
     progression.setTextureRect(IntRect(0,70*frame,420,70));
-    progression.setPosition(xPos,yPos + 60);
+    progression.setPosition(xPos,yPos + 77);
 }
 
 void shopButton::update(Player &terry)
@@ -382,7 +417,7 @@ void shopButton::update(Player &terry)
     if(button.getGlobalBounds().contains(mX,mY))
     {
         //Hover state:
-        button.setColor(Color(255,255,255,255));
+        button.setScale(1.05,1.05);
 
         //If button pressed:
         if(mouse.isButtonPressed(Mouse::Left))
@@ -409,7 +444,7 @@ void shopButton::update(Player &terry)
     else
     {
         //Non-hover state:
-        button.setColor(Color(255,255,255,200));
+        button.setScale(1.f,1.f);
     }
 }
 
@@ -468,6 +503,7 @@ void shopButton::bootsButton(Player &terry)
                 boots++;
                 frame++;
                 terry.money -= boots0;
+                terry.boots = true;
             }
             break;
         case 1 :
@@ -583,11 +619,58 @@ void shopButton::wingsButton(Player &terry)
     }
 }
 
+class Arrow
+{
+public:
+    Arrow(int, int);
+    Sprite arrow;
+    Texture texture;
+    bool update();
+};
+
+Arrow::Arrow(int x, int y)
+{
+    if(!texture.loadFromFile("Arrow.png"))
+        cout << "yikes" << endl;
+    arrow.setTexture(texture);
+    arrow.setOrigin(100,100);
+    arrow.setScale(0.35,0.35);
+    arrow.setPosition(x+50,y+50);
+}
+
+bool Arrow::update()
+{
+    bool clicked = false;
+    Mouse mouse;
+    int mX, mY;
+    mX = mouse.getPosition().x;
+    mY = mouse.getPosition().y;
+    if(arrow.getGlobalBounds().contains(mX,mY))
+    {
+        //Hover state:
+        arrow.setScale(0.4,0.4);
+
+        //If button pressed:
+        if(mouse.isButtonPressed(Mouse::Left))
+        {
+            clicked = true;
+        }
+    }
+    else
+    {
+        arrow.setScale(0.35,0.35);
+    }
+    return clicked;
+}
+
+
 void changeFrame(int, Player &terry, Background &bg, Ground &ground, Water &water);
+void changeFor(int, Background &bg, Ground &ground, Water &water);
+string num2str(double);
 
 int main()
 {
-    int initialSpeed = 3;
+    int initialSpeed = 8;
 
     //cin >> initialSpeed;
 
@@ -596,10 +679,15 @@ int main()
     Ground ground(initialSpeed);
     Water water(initialSpeed);
 
-    shopButton shopB1(1, "Speed.png", 400, 300-20);
-    shopButton shopB2(2, "Boots.png", 400, 440-20);
-    shopButton shopB3(3, "Fuel.png",  400, 580-20);
-    shopButton shopB4(4, "Wings.png", 400, 720-20);
+    shopButton shopB1(1, "Speed.png", 378-21*2, 309-14*2);
+    shopButton shopB2(2, "Boots.png", 378-21*2, 444-14*2);
+    shopButton shopB3(3, "Fuel.png",  378-21*2, 579-14*2);
+    shopButton shopB4(4, "Wings.png", 378-21*2, 719-14*2);
+    Arrow arrow(1495, 772);
+
+    Font font;
+    if(!font.loadFromFile("DroidBB.ttf"))
+        cout << "yikes" << endl;
 
     bool titleScreen = false, shopMenu = true, gameState = false, deathScreen = false;
 
@@ -621,6 +709,13 @@ int main()
     if(shopMenu)
     {
         Texture bgTxtr;
+        Text moneyText;
+
+        moneyText.setFont(font);
+        moneyText.setCharacterSize(100);
+        moneyText.setPosition(352,170);
+        moneyText.setString(num2str(double(terry.money)));
+
         if(!bgTxtr.loadFromFile("Dino Store.png"))
             cout << "yikes" << endl;
         Sprite shopBG;
@@ -630,6 +725,30 @@ int main()
         shopB2.update(terry);
         shopB3.update(terry);
         shopB4.update(terry);
+        gameState = arrow.update();
+        switch(shopB1.speed)
+        {
+        case 1 :
+            changeFrame(7, terry, bg, ground, water);
+            break;
+        case 2 :
+            changeFrame(6, terry, bg, ground, water);
+            break;
+        case 3 :
+            changeFrame(5, terry, bg, ground, water);
+            break;
+        case 4 :
+            changeFrame(4, terry, bg, ground, water);
+            break;
+        default :
+            break;
+        }
+
+        if(gameState)
+        {
+            cout << "gameState" << endl;
+            shopMenu = false;
+        }
 
         window.clear();
 
@@ -639,23 +758,38 @@ int main()
         window.draw(shopB3.button);
         window.draw(shopB4.button);
 
+        window.draw(shopB1.progression);
+        window.draw(shopB2.progression);
+        window.draw(shopB3.progression);
+        window.draw(shopB4.progression);
+
+        window.draw(arrow.arrow);
+        window.draw(moneyText);
+
         window.display();
     }
 
     if(gameState)
     {
-       if(terry.changeTo > 0)
+       if(terry.changeAt > 0)
         {
-            changeFrame(terry.changeTo, terry, bg, ground, water);
-            cout << "yes" << endl;
-            terry.changeTo = 0;
+            changeFrame(terry.changeAt, terry, bg, ground, water);
+            terry.changeAt = 0;
+        }
+        if(terry.changeF > 0)
+        {
+            changeFor(terry.changeF, bg, ground, water);
+            terry.changeF = 0;
         }
 
         terry.setFrame();
         terry.update();
         ground.update(terry.moving, terry.upDown, terry);
+        if(!terry.flew) ground.update(terry.moving, terry.upDown, terry);
         bg.update(terry.moving, terry.upDown, terry);
+        if(!terry.flew) bg.update(terry.moving, terry.upDown, terry);
         water.update(terry.moving, terry.upDown, terry);
+        if(!terry.flew) water.update(terry.moving, terry.upDown, terry);
 
         window.clear(Color(27,81,99));
 
@@ -694,4 +828,18 @@ void changeFrame(int f, Player &terry, Background &bg, Ground &ground, Water &wa
     bg.mAt = f;
     ground.mAt = f;
     water.mAt = f;
+}
+
+void changeFor(int f, Background &bg, Ground &ground, Water &water)
+{
+    bg.mFor += f;
+    ground.mFor += f;
+    water.mFor += f;
+}
+
+string num2str(double n)
+{
+    stringstream ss;
+    ss << "$" << n;
+    return ss.str();
 }
