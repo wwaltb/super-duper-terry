@@ -137,7 +137,7 @@ void Player::setFrame()
 void Player::rampey(int distance)
 {
     hFile >> upDown;
-    cout << upDown << endl;
+    //cout << upDown << endl;
     rFile >> rotation;
     const float aX = 2.82e-14;
     const float bX = -2.8219e-10;
@@ -146,7 +146,7 @@ void Player::rampey(int distance)
     const float eX = 0.179261;
     const float fX = 603.695;
     upDown = aX*pow(distance, 5) + bX*pow(distance, 4) + cX*pow(distance, 3) + dX*pow(distance, 2) + eX*distance + fX;
-    cout << upDown << endl << endl;
+    //cout << upDown << endl << endl;
     sprite.rotate(rotation);
     if (distance < 2200)
         upDown -= 1;
@@ -210,10 +210,11 @@ void Background::update(bool moving, int uD, Player &terry)
 
     if(moving and fC % mAt == 0 or terry.flying)
     {
-        //cout << "bg " << x1 + 1920 - x2 << endl;
+        cout << "bg " << x1 - x2 << endl;
         if(x1 <= -1920)
         {
-            sprite1.setPosition(1920-mFor,y1);
+            sprite1.setPosition(x1-mFor+3840,y1);
+            cout << "less than" << endl;
         }
         else
         {
@@ -221,7 +222,8 @@ void Background::update(bool moving, int uD, Player &terry)
         }
         if(x2 <= -1920)
         {
-            sprite2.setPosition(1920-mFor,y2);
+            sprite2.setPosition(x2-mFor+3840,y2);
+            cout << "less than" << endl;
         }
         else
         {
@@ -265,10 +267,11 @@ void Water::update(bool moving, int uD, Player &terry)
 
     if(moving and fC % mAt == 0 or terry.flying)
     {
-        //cout << "w " << x1 + 1920 - x2 << endl;
+        cout << "w " << x1 - x2 << endl;
         if(x1 <= -1920)
         {
-            sprite1.setPosition(1920-mFor,y1+uD);
+            sprite1.setPosition(x1-mFor+3840,y1+uD);
+            cout << "less than" << endl;
         }
         else
         {
@@ -276,7 +279,8 @@ void Water::update(bool moving, int uD, Player &terry)
         }
         if(x2 <= -1920)
         {
-            sprite2.setPosition(1920-mFor,y2+uD);
+            sprite2.setPosition(x2-mFor+3840,y2+uD);
+            cout << "less than" << endl;
         }
         else
         {
@@ -832,6 +836,7 @@ void changeFrame(int f, Player &terry, Background &bg, Ground &ground, Water &wa
 
 void changeFor(int f, Background &bg, Ground &ground, Water &water)
 {
+    cout << "happened" << endl;
     bg.mFor += f;
     ground.mFor += f;
     water.mFor += f;
