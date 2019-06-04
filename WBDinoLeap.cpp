@@ -17,6 +17,7 @@ public:
     int uDCount, rotCount;
     float lastRot, currentRot;
     double upDown, gravity, bootsEfficiency, fuelMax, fuelCurrent, glideFactor;
+    double glideVelo, totalUpDown;
     bool moving, flying, boots, wings, boosting, ramp, flew, gliding;
     ifstream hFile;
     ifstream rFile;
@@ -52,7 +53,7 @@ Player::Player(int m)
 void Player::startRun()
 {
     moving = 0; flying = 0; boosting = 0; ramp = 0; flew = 0, gliding = 0;
-    upDown = 0; fC = 0; sprite.setRotation(0);
+    upDown = 0; fC = 0; sprite.setRotation(0); totalUpDown = 0;
     fuelCurrent = fuelMax;
     hFile.close();
     rFile.close();
@@ -81,21 +82,31 @@ void Player::update()
     }
     if(flying)
     {
+        bool wasGliding;
+
+        if(gliding)
+            wasGliding = true;
+        else
+            wasGliding = false;
+
+        //cout << wasGliding << endl;
+
         lastRot = sprite.getRotation();
+        currentRot = sprite.getRotation();
 
         //cout << upDown << endl;
-        if(Keyboard::isKeyPressed(Keyboard::Right))
-        {
-            sprite.rotate(1);
-        }
+
         if(Keyboard::isKeyPressed(Keyboard::Left))
         {
             sprite.rotate(-1);
-            if(currentRot <= 45 or currentRot >= 315)
+            if(currentRot <= 45 or currentRot >= 300)
                 gliding = true;
             else gliding = false;
         }
-        else gliding = false;
+        else if(wasGliding and (currentRot <= 45 or currentRot >= 300))
+            gliding = true;
+        else
+            gliding = false;
         if(Keyboard::isKeyPressed(Keyboard::Space) and fuelCurrent > 0 and boots)
         {
             boosting = true;
@@ -103,13 +114,29 @@ void Player::update()
         }
         else boosting = false;
 
+        if(Keyboard::isKeyPressed(Keyboard::Right))
+        {
+            sprite.rotate(1);
+            gliding = false;
+        }
+
+        if(!wasGliding and upDown > 0)
+            gliding = false;
         currentRot = sprite.getRotation();
 
         //gliding = checkGliding();
 
+        if(!wasGliding and gliding)
+        {
+            glideVelo = upDown;
+        }
+
         if(gliding)
         {
-            upDown -= (gravity - glideFactor);
+            upDown = glideVelo*sin(currentRot*3.141592635/180);
+            if(upDown >= glideVelo*sin(300))
+                upDown = 0;
+            upDown -= gravity;
         }
         else
         {
@@ -126,6 +153,12 @@ void Player::update()
         {sprite.rotate(-1); rotCount += -1;}
     if(Keyboard::isKeyPressed(Keyboard::D) and fC % mAt == 0)
         {sprite.rotate(1); rotCount += 1;}*/
+    totalUpDown += upDown;
+    if(totalUpDown <= -600)
+    {
+        flying = false;
+    }
+    cout << totalUpDown << endl;
     fC++;
 }
 
@@ -233,6 +266,10 @@ bool Player::checkGliding()
 {
     float rotChange = lastRot - currentRot;
     cout << rotChange << endl;
+    if(rotChange == 359)
+        rotChange = -1;
+    if(rotChange == -359)
+        rotChange = 1;
     if(rotChange > 0 and (currentRot <= 45 or currentRot >= 315))
     {
         cout << "gliding" << endl;
@@ -470,8 +507,8 @@ void Ground::update(bool moving, int uD, Player &terry)
             distance += mFor;
     }
     fC++;
-    if(sprite4.getPosition().y < 400)
-        terry.flying = false;
+    //if(sprite4.getPosition().y < 400)
+    //    terry.flying = false;
 }
 
 class shopButton
@@ -822,7 +859,7 @@ int main()
 
     bool titleScreen = false, shopMenu = true, startRun = false, gameState = false, deathScreen = false;
 
-    RenderWindow window(VideoMode(1920,1080),"Terry", Style::Fullscreen);
+    RenderWindow window(VideoMode(1920,1080),"Terry"/*, Style::Fullscreen*/);
     window.setFramerateLimit(60);
 
     while(window.isOpen())
@@ -1207,3 +1244,4 @@ string num2str(double n, bool m, bool r)
     else ss << n;
     return ss.str();
 }
+
