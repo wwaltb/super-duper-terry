@@ -2,7 +2,6 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
-#include <windows.h>
 
 using namespace std;
 using namespace sf;
@@ -17,7 +16,7 @@ public:
     int uDCount, rotCount;
     float lastRot, currentRot;
     double upDown, gravity, bootsEfficiency, fuelMax, fuelCurrent, glideFactor;
-    double glideVelo, totalUpDown;
+    double glideVelo, totalUpDown, glideGrav, maxGlide;
     bool moving, flying, boots, wings, boosting, ramp, flew, gliding;
     ifstream hFile;
     ifstream rFile;
@@ -28,22 +27,21 @@ public:
     void startFlying();
     void useBoots();
     void startRun();
-    bool checkGliding();
 };
 
 Player::Player(int m)
 {
     mAt = m;
     frame = 0; row = 0; fC = 0; rotation = 0; uDCount = 0; rotCount = 0;
-    upDown = 0; money = 200000, changeAt = 0, changeF = 0;
+    upDown = 0; money = 0, changeAt = 0, changeF = 0;
     gravity = 0.3f;
     fuelMax = 0;
     fuelCurrent = fuelMax;
+    maxGlide = 0;
     moving = 0; flying = 0; boots = 0; wings = 0; boosting = 0; ramp = 0; flew = 0, gliding = 0;
-    if(!texture.loadFromFile("Terry.png"))
-        cout << "yikers" << endl;
+    texture.loadFromFile("Terry.png");
     sprite.setTexture(texture);
-    sprite.scale(.25f,.25f);
+    sprite.setScale(.25,.25);
     sprite.setOrigin(592,592);
     sprite.setPosition(300+592/5,560+592/4);
     hFile.open("height.txt");
@@ -66,7 +64,6 @@ void Player::update()
     sprite.setTextureRect(IntRect(1024*frame,1024*row,1024,1024));
     int x = sprite.getPosition().x;
     int y = sprite.getPosition().y;
-    //upDown = 0;
 
     if(!flew)
     {
@@ -74,10 +71,6 @@ void Player::update()
         if(Keyboard::isKeyPressed(Keyboard::Right) and fC % mAt == 0)
         {
             moving = true;
-            /*cout << "uD: " << uDCount << endl;
-            uDCount = 0;
-            cout << "rot: " << rotCount << endl;
-            rotCount = 0;*/
         }
     }
     if(flying)
@@ -89,22 +82,20 @@ void Player::update()
         else
             wasGliding = false;
 
-        //cout << wasGliding << endl;
-
         lastRot = sprite.getRotation();
         currentRot = sprite.getRotation();
-
-        //cout << upDown << endl;
 
         if(Keyboard::isKeyPressed(Keyboard::Left))
         {
             sprite.rotate(-1);
-            if(currentRot <= 45 or currentRot >= 300)
+            if(currentRot > 30 and currentRot < 90)
+                gliding = true;
+            else if(wasGliding and (currentRot <= 45 or currentRot >= 300))
                 gliding = true;
             else gliding = false;
         }
-        else if(wasGliding and (currentRot <= 45 or currentRot >= 300))
-            gliding = true;
+        /*else if(wasGliding and (currentRot <= 45 or currentRot >= 300))
+            gliding = true;*/
         else
             gliding = false;
         if(Keyboard::isKeyPressed(Keyboard::Space) and fuelCurrent > 0 and boots)
@@ -124,41 +115,29 @@ void Player::update()
             gliding = false;
         currentRot = sprite.getRotation();
 
-        //gliding = checkGliding();
-
         if(!wasGliding and gliding)
         {
             glideVelo = upDown;
         }
 
-        if(gliding)
+        if(gliding and wings)
         {
-            upDown = glideVelo*sin(currentRot*3.141592635/180);
-            if(upDown >= glideVelo*sin(300))
-                upDown = 0;
-            upDown -= gravity;
+            glideGrav += gravity/(2+glideFactor);
+            upDown = glideVelo*sin(currentRot*3.141592635/180) - glideGrav;
         }
         else
         {
+            maxGlide = 0;
+            glideGrav = 0;
             upDown -= gravity;
         }
 
     }
-    //Testing terry positions:
-    /*if(Keyboard::isKeyPressed(Keyboard::Up) and fC % mAt == 0)
-        {upDown = 5; uDCount += upDown;}
-    if(Keyboard::isKeyPressed(Keyboard::Down) and fC % mAt == 0)
-        {upDown = -5; uDCount += upDown;}
-    if(Keyboard::isKeyPressed(Keyboard::A) and fC % mAt == 0)
-        {sprite.rotate(-1); rotCount += -1;}
-    if(Keyboard::isKeyPressed(Keyboard::D) and fC % mAt == 0)
-        {sprite.rotate(1); rotCount += 1;}*/
     totalUpDown += upDown;
     if(totalUpDown <= -600)
     {
         flying = false;
     }
-    cout << totalUpDown << endl;
     fC++;
 }
 
@@ -198,7 +177,12 @@ void Player::setFrame()
                 else {frame = 1; row = 1;}
             }
         }
-        if(flying)
+        if(boosting)
+        {
+            if(frame == 2) {frame = 0; row = 3;}
+                     else {frame = 2; row = 2;}
+        }
+        else if(flying)
         {
             row = 2;
             frame = 1;
@@ -208,33 +192,17 @@ void Player::setFrame()
             row = 1;
             frame = 1;
         }
-        if(boosting)
-        {
-            if(frame = 2) {frame = 0; row = 3;}
-                     else {frame = 2; row = 2;}
-        }
     }
 }
 
 void Player::rampey(int distance)
 {
     hFile >> upDown;
-    //cout << upDown << endl;
     rFile >> rotation;
-    const float aX = 2.82e-14;
-    const float bX = -2.8219e-10;
-    const float cX = 9.9868e-7;
-    const float dX = -0.00134363;
-    const float eX = 0.179261;
-    const float fX = 603.695;
-    //upDown = aX*pow(distance, 5) + bX*pow(distance, 4) + cX*pow(distance, 3) + dX*pow(distance, 2) + eX*distance + fX;
-    //cout << upDown << endl << endl;
     sprite.rotate(rotation);
     if (distance < 2200)
         upDown -= 1;
-    //if (distance > 1850 and distance < 2146)
-        upDown += 1.5;
-    //else upDown += 1;
+    else upDown += 1;
 }
 
 void Player::startFlying()
@@ -251,8 +219,6 @@ void Player::startFlying()
 
 void Player::useBoots()
 {
-    //cout << upDown << endl;
-    //cout << fuelCurrent << endl;
     double rot = sprite.getRotation()*(3.14159265/180);
     if(fuelCurrent > 0)
     {
@@ -260,22 +226,6 @@ void Player::useBoots()
         changeF = 0.9*cos(-rot);
     }
     fuelCurrent -= bootsEfficiency;
-}
-
-bool Player::checkGliding()
-{
-    float rotChange = lastRot - currentRot;
-    cout << rotChange << endl;
-    if(rotChange == 359)
-        rotChange = -1;
-    if(rotChange == -359)
-        rotChange = 1;
-    if(rotChange > 0 and (currentRot <= 45 or currentRot >= 315))
-    {
-        cout << "gliding" << endl;
-        return true;
-    }
-    else return false;
 }
 
 class Background
@@ -293,8 +243,7 @@ public:
 Background::Background(int m)
 {
     mAt = m;
-    if(!texture.loadFromFile("DinoBG.png"))
-        cout << "yikers" << endl;
+    texture.loadFromFile("DinoBG.png");
     sprite1.setTexture(texture);
     sprite1.setPosition(0,0);
     sprite2.setTexture(texture);
@@ -334,7 +283,6 @@ void Background::update(bool moving, int uD, Player &terry)
 
     if(moving and fC % mAt == 0 or terry.flying)
     {
-        //cout << "bg " << x1 + 1920 - x2 << endl;
         if(x1 <= -1920)
         {
             sprite1.setPosition(x1-mFor+3840,y1);
@@ -371,8 +319,7 @@ public:
 Water::Water(int m)
 {
     mAt = m;
-    if(!texture.loadFromFile("Dino Water.png"))
-        cout << "yikers" << endl;
+    texture.loadFromFile("Dino Water.png");
     sprite1.setTexture(texture);
     sprite1.setPosition(0,1600);
     sprite2.setTexture(texture);
@@ -397,7 +344,6 @@ void Water::update(bool moving, int uD, Player &terry)
 
     if(moving and fC % mAt == 0 or terry.flying)
     {
-        //cout << "w " << x1 + 1920 - x2 << endl;
         if(x1 <= -1920)
         {
             sprite1.setPosition(x1-mFor+3840,y1+uD);
@@ -438,12 +384,9 @@ public:
 Ground::Ground(int m)
 {
     mAt = m;
-    if(!grass.loadFromFile("Ground Pixelated.png"))
-        cout << "yikers" << endl;
-    if(!ramp.loadFromFile("Ramp Pixelated.png"))
-        cout << "yikers" << endl;
-    if(!water.loadFromFile("Dino Water.png"))
-        cout << "yikers" << endl;
+    grass.loadFromFile("Ground Pixelated.png");
+    ramp.loadFromFile("Ramp Pixelated.png");
+    water.loadFromFile("Dino Water.png");
     sprite1.setTexture(grass);
     sprite1.setPosition(0,700);
     sprite2.setTexture(ramp);
@@ -469,7 +412,6 @@ void Ground::update(bool moving, int uD, Player &terry)
     {
         terry.startFlying();
     }
-    //cout << sprite4.getPosition().y << endl;
     sprite1.setTextureRect(IntRect(0,0,1920,1080));
     sprite2.setTextureRect(IntRect(0,0,1920,1080));
     sprite4.setTextureRect(IntRect(0,0,1920,1080));
@@ -492,7 +434,6 @@ void Ground::update(bool moving, int uD, Player &terry)
         {
             if(distance >= 1530 and distance <= 3330)
             {
-                //terry.rampey(distance);
                 terry.ramp = true;
             }
             else{terry.ramp = false;}
@@ -507,8 +448,105 @@ void Ground::update(bool moving, int uD, Player &terry)
             distance += mFor;
     }
     fC++;
-    //if(sprite4.getPosition().y < 400)
-    //    terry.flying = false;
+}
+
+class Stars
+{
+public:
+    Stars(int, int, int, Texture, Texture, Texture, Texture);
+    Texture texture0;
+    Texture texture1;
+    Texture texture2;
+    Texture texture3;
+    Sprite sprite1;
+    Sprite sprite2;
+    int fC = 0, mAt, dFor = 10, mFor = 10, distance = 0, starY, offset, frame = 0;
+    void update(bool, int, Player &terry);
+    void startRun();
+};
+
+Stars::Stars(int m, int y, int x, Texture t0, Texture t1, Texture t2, Texture t3)
+{
+    mAt = m;
+    starY = y;
+    offset = x;
+    texture0 = t0;
+    texture1 = t1;
+    texture2 = t2;
+    texture3 = t3;
+    sprite1.setTexture(texture0);
+    sprite1.setPosition(0+offset,starY);
+    sprite2.setTexture(texture0);
+    sprite2.setPosition(1920+offset,starY);
+    sprite1.setTextureRect(IntRect(0,0,1920,1080));
+    sprite2.setTextureRect(IntRect(0,0,1920,1080));
+}
+
+void Stars::startRun()
+{
+    sprite1.setPosition(0+offset,starY);
+    sprite2.setPosition(1920+offset,starY);
+    mFor = 10; distance = 0; fC = 0;
+}
+
+void Stars::update(bool moving, int uD, Player &terry)
+{
+    int x1 = sprite1.getPosition().x;
+    int y1 = sprite1.getPosition().y;
+    int x2 = sprite2.getPosition().x;
+    int y2 = sprite2.getPosition().y;
+
+    if(fC % 20 == 0)
+    {
+        switch(frame)
+        {
+        case 0 :
+            sprite1.setTexture(texture1);
+            sprite2.setTexture(texture1);
+            frame = 1;
+            break;
+        case 1 :
+            sprite1.setTexture(texture2);
+            sprite2.setTexture(texture2);
+            frame = 2;
+            break;
+        case 2 :
+            sprite1.setTexture(texture3);
+            sprite2.setTexture(texture3);
+            frame = 3;
+            break;
+        case 3 :
+            sprite1.setTexture(texture0);
+            sprite2.setTexture(texture0);
+            frame = 0;
+            break;
+        default :
+            break;
+        }
+    }
+
+
+    if(moving and fC % mAt == 0 or terry.flying)
+    {
+        if(x1 <= -1920)
+        {
+            sprite1.setPosition(x1-mFor+3840,y1+uD);
+        }
+        else
+        {
+            sprite1.setPosition(x1-mFor,y1+uD);
+        }
+        if(x2 <= -1920)
+        {
+            sprite2.setPosition(x2-mFor+3840,y2+uD);
+        }
+        else
+        {
+            sprite2.setPosition(x2-mFor,y2+uD);
+        }
+        distance += mFor;
+    }
+    fC++;
 }
 
 class shopButton
@@ -537,10 +575,8 @@ shopButton::shopButton(int i, string n, int x, int y)
     xPos = x; yPos = y;
     speed = 0; boots = 0; fuel = 0; wings = 0;
     frame = 0;
-    if(!texture.loadFromFile(n))
-        cout << "yikes" << endl;
-    if(!texture2.loadFromFile("Shop Bar.png"))
-        cout << "yikes" << endl;
+    texture.loadFromFile(n);
+    texture2.loadFromFile("Shop Bar.png");
     button.setTexture(texture);
     button.setOrigin(210,46.5);
     button.setPosition(xPos + 210,yPos + 46.5);
@@ -603,6 +639,7 @@ void shopButton::speedButton(Player &terry)
                 speed++;
                 frame++;
                 terry.money -= speed0;
+                texture.loadFromFile("Speed 1.png");
             }
             break;
         case 1 :
@@ -611,6 +648,7 @@ void shopButton::speedButton(Player &terry)
                 speed++;
                 frame++;
                 terry.money -= speed1;
+                texture.loadFromFile("Speed 2.png");
             }
             break;
         case 2 :
@@ -619,6 +657,7 @@ void shopButton::speedButton(Player &terry)
                 speed++;
                 frame++;
                 terry.money -= speed2;
+                texture.loadFromFile("Speed 3.png");
             }
             break;
         case 3 :
@@ -627,6 +666,7 @@ void shopButton::speedButton(Player &terry)
                 speed++;
                 frame++;
                 terry.money -= speed3;
+                texture.loadFromFile("Speed.png");
             }
             break;
         default :
@@ -647,6 +687,7 @@ void shopButton::bootsButton(Player &terry)
                 frame++;
                 terry.money -= boots0;
                 terry.boots = true;
+                texture.loadFromFile("Boots 1.png");
             }
             break;
         case 1 :
@@ -655,6 +696,7 @@ void shopButton::bootsButton(Player &terry)
                 boots++;
                 frame++;
                 terry.money -= boots1;
+                texture.loadFromFile("Boots 2.png");
             }
             break;
         case 2 :
@@ -663,6 +705,7 @@ void shopButton::bootsButton(Player &terry)
                 boots++;
                 frame++;
                 terry.money -= boots2;
+                texture.loadFromFile("Boots 3.png");
             }
             break;
         case 3 :
@@ -671,6 +714,7 @@ void shopButton::bootsButton(Player &terry)
                 boots++;
                 frame++;
                 terry.money -= boots3;
+                texture.loadFromFile("Boots.png");
             }
             break;
         default :
@@ -689,6 +733,7 @@ void shopButton::fuelButton(Player &terry)
                 fuel++;
                 frame++;
                 terry.money -= fuel0;
+                texture.loadFromFile("Fuel 1.png");
             }
             break;
         case 1 :
@@ -697,6 +742,7 @@ void shopButton::fuelButton(Player &terry)
                 fuel++;
                 frame++;
                 terry.money -= fuel1;
+                texture.loadFromFile("Fuel 2.png");
             }
             break;
         case 2 :
@@ -705,6 +751,7 @@ void shopButton::fuelButton(Player &terry)
                 fuel++;
                 frame++;
                 terry.money -= fuel2;
+                texture.loadFromFile("Fuel 3.png");
             }
             break;
         case 3 :
@@ -713,6 +760,7 @@ void shopButton::fuelButton(Player &terry)
                 fuel++;
                 frame++;
                 terry.money -= fuel3;
+                texture.loadFromFile("Fuel.png");
             }
             break;
         default :
@@ -733,6 +781,7 @@ void shopButton::wingsButton(Player &terry)
                 terry.money -= wings0;
                 terry.wings = true;
                 terry.texture.loadFromFile("Terry Wings.png");
+                texture.loadFromFile("Wings 1.png");
             }
             break;
         case 1 :
@@ -741,6 +790,7 @@ void shopButton::wingsButton(Player &terry)
                 wings++;
                 frame++;
                 terry.money -= wings1;
+                texture.loadFromFile("Wings 2.png");
             }
             break;
         case 2 :
@@ -749,6 +799,7 @@ void shopButton::wingsButton(Player &terry)
                 wings++;
                 frame++;
                 terry.money -= wings2;
+                texture.loadFromFile("Wings 3.png");
             }
             break;
         case 3 :
@@ -757,6 +808,7 @@ void shopButton::wingsButton(Player &terry)
                 wings++;
                 frame++;
                 terry.money -= wings3;
+                texture.loadFromFile("Wings.png");
             }
             break;
         default :
@@ -775,8 +827,7 @@ public:
 
 Arrow::Arrow(int x, int y)
 {
-    if(!texture.loadFromFile("Arrow.png"))
-        cout << "yikes" << endl;
+    texture.loadFromFile("Arrow.png");
     arrow.setTexture(texture);
     arrow.setOrigin(100,100);
     arrow.setScale(0.35,0.35);
@@ -809,59 +860,123 @@ bool Arrow::update()
 }
 
 
-void changeFrame(int, Player &terry, Background &bg, Ground &ground, Water &water);
-void changeFor(int, Background &bg, Ground &ground, Water &water);
+void changeFrame(int, Player &terry, Background &bg, Ground &ground, Water &water, vector<Stars> &starVec);
+void changeFor(int, Background &bg, Ground &ground, Water &water, vector<Stars> &starVec);
 string num2str(double, bool, bool);
 
 int main()
 {
-    //FreeConsole();
+    //Creating the Game Window:
+    RenderWindow window(VideoMode(1920,1080),"Terry", Style::Fullscreen);
+    window.setFramerateLimit(60);
+    window.clear(Color::Black);
+    window.display();
 
     int initialSpeed = 8;
 
     int currentScore = 0;
     int highScore = 0;
 
-    //cin >> initialSpeed;
+    int idleFC = 0;
+    bool idleFrame = 0;
 
+    int titleFC = 0;
+
+    //Creating the Game Objects:
     Player terry(initialSpeed);
     Background bg(initialSpeed);
     Ground ground(initialSpeed);
     Water water(initialSpeed);
 
-    shopButton shopB1(1, "Speed.png", 378-21*2, 309-14*2);
-    shopButton shopB2(2, "Boots.png", 378-21*2, 444-14*2);
-    shopButton shopB3(3, "Fuel.png",  378-21*2, 579-14*2);
-    shopButton shopB4(4, "Wings.png", 378-21*2, 719-14*2);
+    //Star Texures:
+    Texture texture0;
+    Texture texture1;
+    Texture texture2;
+    Texture texture3;
+
+    texture0.loadFromFile("Stars 0.png");
+    texture1.loadFromFile("Stars 1.png");
+    texture2.loadFromFile("Stars 2.png");
+    texture3.loadFromFile("Stars 3.png");
+
+    //Creating a vector of stars:
+    vector <Stars> starVec;
+    for(int i = 1; i < 40; i++)
+    {
+        int starY = -3000 -1000*i;
+        int offset = 100*i;
+        starVec.push_back(Stars(initialSpeed, starY, offset, texture0, texture1, texture2, texture3));
+    }
+
+    //Creating the Shop Buttons:
+    shopButton shopB1(1, "Speed 0.png", 378-21*2, 309-14*2);
+    shopButton shopB2(2, "Boots 0.png", 378-21*2, 444-14*2);
+    shopButton shopB3(3, "Fuel 0.png",  378-21*2, 579-14*2);
+    shopButton shopB4(4, "Wings 0.png", 378-21*2, 719-14*2);
     Arrow arrow(1495, 772);
 
     Arrow dArrow(1353, 744);
 
     Font font;
+
+    //Creating Textures:
     Texture fuel;
     Texture dScreenText;
-    if(!font.loadFromFile("DroidBB.ttf"))
-        cout << "yikes" << endl;
-    if(!fuel.loadFromFile("Fuel Gage (3).png"))
-        cout << "yikes" << endl;
-    if(!dScreenText.loadFromFile("Death Screen.png"))
-        cout << "yikes" << endl;
+    Texture tIdle;
+    Texture tIdleW;
+    Texture bgTxtr;
+    Texture titleBG;
+    Texture logo;
+    Texture titleTer;
 
+    //Loading Textures:
+    font.loadFromFile("DroidBB.ttf");
+    fuel.loadFromFile("Fuel Gage (3).png");
+    dScreenText.loadFromFile("Death Screen.png");
+    tIdle.loadFromFile("Terry Idle.png");
+    tIdleW.loadFromFile("Terry Idle Wings.png");
+    bgTxtr.loadFromFile("Dino Store.png");
+    titleBG.loadFromFile("Dino Start BG.png");
+    logo.loadFromFile("Dino Leap Logo.png");
+    titleTer.loadFromFile("Terry.png");
+
+    //Creating the Fuel Gage:
     Sprite fuelGage;
     fuelGage.setTexture(fuel);
     fuelGage.setTextureRect(IntRect(0,0,192,180));
     fuelGage.setScale(.5,.5);
     fuelGage.setPosition(59,916);
 
+    //Creating the Death Screen:
     Sprite dScreen;
     dScreen.setTexture(dScreenText);
     dScreen.setPosition(452,206);
 
-    bool titleScreen = false, shopMenu = true, startRun = false, gameState = false, deathScreen = false;
+    //Creating the Title Screen Background:
+    Sprite titleBG1;
+    Sprite titleBG2;
+    titleBG1.setTexture(titleBG);
+    titleBG2.setTexture(titleBG);
+    titleBG2.setPosition(1920,0);
 
-    RenderWindow window(VideoMode(1920,1080),"Terry"/*, Style::Fullscreen*/);
-    window.setFramerateLimit(60);
+    //Creating the Title Logo:
+    Sprite titleLogo;
+    titleLogo.setTexture(logo);
+    titleLogo.setOrigin(384,192);
+    titleLogo.setScale(1.4,1.4);
+    titleLogo.setPosition(1920/2,200);
 
+    //Creating the Title Terry:
+    Sprite titleTerry;
+    titleTerry.setTexture(titleTer);
+    titleTerry.setScale(.4,.4);
+    titleTerry.setTextureRect(IntRect(1024*0,1024*1,1024,1024));
+    titleTerry.setPosition(1920/2-((1024*.4)/2),400);
+
+    //Bools for which Game Scene:
+    bool titleScreen = true, shopMenu = false, startRun = false, gameState = false, deathScreen = false;
+
+    //Game Loop:
     while(window.isOpen())
     {
         Event event;
@@ -885,18 +1000,76 @@ int main()
                 }
         }
 
+    if(titleScreen)
+    {
+        Text cont;
+        cont.setFont(font);
+        cont.setCharacterSize(50);
+        cont.setString("[Space]");
+        cont.setPosition(1920/2-cont.getGlobalBounds().width/2,1000);
+
+        int x1 = titleBG1.getPosition().x;
+        int x2 = titleBG2.getPosition().x;
+        int mFor = 1;
+
+        float yChange = sin(titleFC*3.141592635/180)/2;
+
+        titleTerry.move(0,yChange);
+
+        if(x1 <= -1920)
+        {
+            titleBG1.move(-mFor+3840,0);
+        }
+        else
+        {
+            titleBG1.move(-mFor,0);
+        }
+        if(x2 <= -1920)
+        {
+            titleBG2.move(-mFor+3840,0);
+        }
+        else
+        {
+            titleBG2.move(-mFor,0);
+        }
+
+        if(Keyboard::isKeyPressed(Keyboard::Space))
+        {
+            titleScreen = false;
+            gameState = true;
+        }
+
+        //Clears the window;
+        window.clear();
+
+        //Drawing Title Objects:
+        window.draw(titleBG1);
+        window.draw(titleBG2);
+        window.draw(titleTerry);
+        window.draw(titleLogo);
+        window.draw(cont);
+
+        //Updates the window:
+        window.display();
+
+        titleFC++;
+    }
+
     if(shopMenu)
     {
-        Texture bgTxtr;
         Text moneyText;
+        Text scoreText;
 
         moneyText.setFont(font);
         moneyText.setCharacterSize(100);
         moneyText.setPosition(352,170);
         moneyText.setString(num2str(double(terry.money), true, true));
 
-        if(!bgTxtr.loadFromFile("Dino Store.png"))
-            cout << "yikes" << endl;
+        scoreText.setFont(font);
+        scoreText.setCharacterSize(100);
+        scoreText.setPosition(1208,170);
+        scoreText.setString(num2str(double(highScore), false, true));
+
         Sprite shopBG;
         shopBG.setTexture(bgTxtr);
 
@@ -908,19 +1081,19 @@ int main()
         switch(shopB1.speed)
         {
         case 1 :
-            changeFrame(7, terry, bg, ground, water);
+            changeFrame(7, terry, bg, ground, water, starVec);
             break;
         case 2 :
-            changeFrame(6, terry, bg, ground, water);
+            changeFrame(6, terry, bg, ground, water, starVec);
             break;
         case 3 :
-            changeFrame(5, terry, bg, ground, water);
+            changeFrame(5, terry, bg, ground, water, starVec);
             break;
         case 4 :
-            changeFrame(4, terry, bg, ground, water);
+            changeFrame(4, terry, bg, ground, water, starVec);
             break;
         default :
-            changeFrame(initialSpeed, terry, bg, ground, water);
+            changeFrame(initialSpeed, terry, bg, ground, water, starVec);
             break;
         }
         switch(shopB2.boots)
@@ -982,6 +1155,14 @@ int main()
             break;
         }
 
+        Sprite terryIdle;
+        if(terry.wings) terryIdle.setTexture(tIdleW);
+        else terryIdle.setTexture(tIdle);
+        if(idleFC % 30 == 0) idleFrame = !idleFrame;
+        terryIdle.setTextureRect(IntRect(1024*idleFrame,1024*terry.boots,1024,1024));
+        terryIdle.setScale(.5,.5);
+        terryIdle.setPosition(920,316);
+
         if(arrow.update())
         {
             startRun = true;
@@ -1003,8 +1184,12 @@ int main()
 
         window.draw(arrow.arrow);
         window.draw(moneyText);
+        window.draw(scoreText);
+        window.draw(terryIdle);
 
         window.display();
+
+        idleFC++;
     }
 
     if(startRun)
@@ -1022,12 +1207,12 @@ int main()
     {
        if(terry.changeAt > 0)
         {
-            changeFrame(terry.changeAt, terry, bg, ground, water);
+            changeFrame(terry.changeAt, terry, bg, ground, water, starVec);
             terry.changeAt = 0;
         }
         if(terry.changeF > 0)
         {
-            changeFor(terry.changeF, bg, ground, water);
+            changeFor(terry.changeF, bg, ground, water, starVec);
             terry.changeF = 0;
         }
 
@@ -1039,6 +1224,12 @@ int main()
         if(!terry.flew) bg.update(terry.moving, terry.upDown, terry);
         water.update(terry.moving, terry.upDown, terry);
         if(!terry.flew) water.update(terry.moving, terry.upDown, terry);
+        for(int i = 0; i < starVec.size(); i++)
+        {
+            starVec[i].update(terry.moving, terry.upDown, terry);
+            if(!terry.flew) starVec[i].update(terry.moving, terry.upDown, terry);
+        }
+
 
         if(terry.fuelMax > 0)
         if(terry.fuelCurrent < 0) terry.fuelCurrent = 0;
@@ -1106,6 +1297,13 @@ int main()
         window.draw(ground.sprite2);
         window.draw(ground.sprite4);
         //window.draw(ground.sprite3);
+
+        for(int i = 0; i < starVec.size(); i++)
+        {
+            window.draw(starVec[i].sprite1);
+            window.draw(starVec[i].sprite2);
+        }
+
 
         window.draw(terry.sprite);
 
@@ -1218,22 +1416,27 @@ int main()
     }
 }
 
-void changeFrame(int f, Player &terry, Background &bg, Ground &ground, Water &water)
+void changeFrame(int f, Player &terry, Background &bg, Ground &ground, Water &water, vector<Stars> &starVec)
 {
     terry.mAt = f;
     bg.mAt = f;
     ground.mAt = f;
     water.mAt = f;
+    for(int i = 0; i < starVec.size(); i++)
+    {
+        starVec[i].mAt = f;
+    }
 }
 
-void changeFor(int f, Background &bg, Ground &ground, Water &water)
+void changeFor(int f, Background &bg, Ground &ground, Water &water, vector<Stars> &starVec)
 {
     bg.mFor = bg.dFor + f;
     ground.mFor = ground.dFor + f;
     water.mFor = water.dFor + f;
-    /*bg.mFor += f;
-    ground.mFor += f;
-    water.mFor += f;*/
+    for(int i = 0; i < starVec.size(); i++)
+    {
+        starVec[i].mFor = starVec[i].dFor + f;
+    }
 }
 
 string num2str(double n, bool m, bool r)
@@ -1244,4 +1447,3 @@ string num2str(double n, bool m, bool r)
     else ss << n;
     return ss.str();
 }
-
